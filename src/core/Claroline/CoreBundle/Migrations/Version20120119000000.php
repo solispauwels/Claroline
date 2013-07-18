@@ -1404,6 +1404,8 @@ class Version20120119000000 extends BundleMigration
             array('onDelete' => 'CASCADE')
         );
 
+    }
+
     private function createTagTable(Schema $schema)
     {
         $tagTable = $schema->createTable('icap__tag');
