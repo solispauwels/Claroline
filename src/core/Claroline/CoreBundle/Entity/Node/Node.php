@@ -12,10 +12,10 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Node
 {
-    public function __construct()
+    public function __construct($name = null, $value = null, $type = null)
     {
         $this->created = new \Datetime();
-        $this->modified = new \Datetime();
+        $this->update($name, $value, $type);
     }
 
     /**
@@ -192,5 +192,27 @@ class Node
     public function getType()
     {
         return $this->type;
+    }
+
+    /**
+     * Update node
+     *
+     * @return \Claroline\CoreBundle\Entity\Node
+     */
+    public function update($name = null, $value = null, $type = null)
+    {
+        if ($name) {
+            $this->setName($name);
+        }
+
+        if ($value) {
+            $this->setValue($value);
+        }
+
+        if ($type) {
+            $this->setType($type);
+        }
+
+        $this->setModified();
     }
 }

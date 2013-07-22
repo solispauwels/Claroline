@@ -12,13 +12,13 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Link
 {
-    public function __construct($first)
+    public function __construct($position)
     {
-        $this->size = "12";
+        $this->size = 12;
 
-        if ($first) {
-            $first->setBack($this);
-            $this->next = $first;
+        if ($position) {
+            $position->setBack($this);
+            $this->next = $position;
             $this->back = null;
         } else {
             $this->next = null;
@@ -87,7 +87,7 @@ class Link
     }
 
     /**
-     * Set size
+     * Set size = null
      *
      * @param integer $size
      * @return Link
@@ -235,6 +235,36 @@ class Link
 
         if ($this->getNext()) {
             $this->getNext()->setBack($this->getBack());
+        }
+    }
+
+    /**
+     * Update link entity.
+     */
+    public function update($a = null, $type = null, $b = null, $size = null, $next = null, $back = null)
+    {
+        if ($a) {
+            $this->setA($a);
+        }
+
+        if ($b) {
+            $this->setB($b);
+        }
+
+        if ($type) {
+            $this->setType($type);
+        }
+
+        if ($size) {
+            $this->setSize($size);
+        }
+
+        if ($next) {
+            $this->setNext($next);
+        }
+
+        if ($back) {
+            $this->setBack($back);
         }
     }
 }
