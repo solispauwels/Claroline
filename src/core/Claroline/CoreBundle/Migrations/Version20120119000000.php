@@ -135,11 +135,14 @@ class Version20120119000000 extends BundleMigration
         $table->addColumn('password', 'string', array('length' => 255));
         $table->addColumn('salt', 'string', array('length' => 255));
         $table->addColumn('phone', 'string', array('notnull' => false));
-        $table->addColumn('mail', 'string', array('length' => 255, 'notnull' => false));
+        $table->addColumn('mail', 'string', array('length' => 255, 'notnull' => true));
         $table->addColumn('administrative_code', 'string', array('length' => 255, 'notnull' => false));
         $table->addColumn('workspace_id', 'integer', array('notnull' => false));
         $table->addColumn('creation_date', 'datetime');
+        $table->addColumn('reset_password', 'string', array('notnull' => false));
+        $table->addColumn('hash_time', 'integer', array('notnull' => false));
         $table->addUniqueIndex(array('username'));
+        $table->addUniqueIndex(array('mail'));
 
         $table->addForeignKeyConstraint(
             $this->getStoredTable('claro_workspace'),
@@ -166,7 +169,7 @@ class Version20120119000000 extends BundleMigration
         $table = $schema->createTable('claro_group');
 
         $this->addId($table);
-        $table->addColumn('name', 'string', array('length' => 50, 'notnull' => true));
+        $table->addColumn('name', 'string', array('length' => 255, 'notnull' => true));
         $table->addUniqueIndex(array('name'));
 
         $this->storeTable($table);
@@ -211,6 +214,9 @@ class Version20120119000000 extends BundleMigration
         $table->addColumn('code', 'string', array('length' => 255));
         $table->addColumn('user_id', 'integer', array('notnull' => false));
         $table->addColumn('guid', 'string', array('length' => 255));
+        $table->addColumn('displayable', 'boolean', array('notnull' => false));
+        $table->addColumn('self_registration', 'boolean', array('notnull' => false));
+        $table->addColumn('self_unregistration', 'boolean', array('notnull' => false));
         $table->addUniqueIndex(array('code'));
         $table->addUniqueIndex(array('guid'));
 
