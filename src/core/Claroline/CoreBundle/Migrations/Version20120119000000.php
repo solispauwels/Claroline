@@ -1333,6 +1333,7 @@ class Version20120119000000 extends BundleMigration
 
         $this->addId($table);
         $table->addColumn('name', 'string', array('length' => 255));
+        $table->addUniqueIndex(array("name"));
 
         $this->storeTable($table);
     }

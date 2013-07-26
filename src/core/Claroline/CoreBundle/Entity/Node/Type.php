@@ -8,10 +8,17 @@ use Doctrine\ORM\Mapping as ORM;
  * Type
  *
  * @ORM\Entity()
- * @ORM\Table(name="claro_nodetype")
+ * @ORM\Table(name="claro_nodetype", uniqueConstraints={@ORM\UniqueConstraint(name="name", columns={"name"})})
  */
 class Type
 {
+    public function __construct($name = null)
+    {
+        if ($name) {
+            $this->setName($name);
+        }
+    }
+
     /**
      * @var integer
      *

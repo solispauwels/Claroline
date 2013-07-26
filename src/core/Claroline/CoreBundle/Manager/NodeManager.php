@@ -18,16 +18,18 @@ class NodeManager
     private $node;
     private $link;
     private $manager;
+    private $doctrine;
 
     /**
      * @InjectParams({
-     *     "doctrine"        = @Inject("doctrine"),
+     *     "doctrine"   = @Inject("doctrine"),
      *     "manager"    = @Inject("claroline.persistence.object_manager")
      * })
      */
     public function __construct($doctrine, $manager)
     {
         $this->manager = $manager;
+        $this->doctrine = $doctrine;
         $this->node = $doctrine->getRepository('ClarolineCoreBundle:Node\Node');
         $this->type = $doctrine->getRepository('ClarolineCoreBundle:Node\Type');
         $this->link = $doctrine->getRepository('ClarolineCoreBundle:Node\Link');
@@ -36,21 +38,71 @@ class NodeManager
     /**
      * Get nodes entities.
      *
+     * Example: print_r($this->node->query('content comment content 23 b next'));
+     *
      * @TODO create human language query as "Users who like the color blue" or "Comments belonging to user 1"
      */
-    public function get($a, $link, $b, $value, $limit = 30)
+    public function query($query, $methode = 'getArrayResult')
     {
-        $array = array();
-        $first = $this->getFirst(
-            $a, $link, $this->getNode(array('type' => $this->getType($b), 'value' => $value))
-        );
+        $query = explode(' ', $query);
 
-        for ($i = 0; $i < $limit or $first != null; $i++) {
-            $array[] = $first->getNode();
-            $first = $first->getNext();
+        switch (count($query)) {
+            case 6:
+                return $this->get(
+                    $query[0], $query[1], $query[2], $query[3], $query[4], $query[5]
+                )->getQuery()->$methode();
+            case 5:
+                return $this->get($query[0], $query[1], $query[2], $query[3], $query[4])->getQuery()->$methode();
+            case 4:
+                return $this->get($query[0], $query[1], $query[2], $query[3])->getQuery()->$methode();
+            case 3:
+                return $this->get($query[0], $query[1], $query[2])->getQuery()->$methode();
         }
 
-        return $array;
+        return null;
+    }
+
+    /**
+     * Get nodes entities.
+     */
+    public function get($a, $link, $b, $mixed = null, $filter = 'b', $position = 'back')
+    {
+        return $this->getAll($mixed, $filter, $position)
+            ->andwhere("link_type.name = '$link'")
+            ->andWhere("a_type.name = '$a'")
+            ->andWhere("b_type.name = '$b'");
+    }
+
+    /**
+     * Get nodes entities.
+     */
+    public function getAll($mixed = null, $filter = 'b', $position = 'back')
+    {
+        $query = $this->doctrine->getManager()->createQueryBuilder()
+            ->select('link', 'a', 'b', 'a_type', 'b_type', 'link_type')
+            ->from('ClarolineCoreBundle:Node\Link', 'link')
+            ->join('link.a', 'a')
+            ->join('link.b', 'b')
+            ->join('a.type', 'a_type')
+            ->join('b.type', 'b_type')
+            ->join('link.type', 'link_type')
+            ->Where("link.$position is null");
+
+        if (is_array($mixed)) {
+
+            foreach ($mixed as $field => $value) {
+                $query->andWhere("$filter.$field = '$value'");
+            }
+
+        } else if (is_numeric($mixed)) {
+            $query->andWhere("$filter.id = '$mixed'");
+        } else if (is_string($mixed)) {
+            $query->andWhere("$filter.value = '$mixed'");
+        } else if (is_object($mixed)) {
+            $query->andWhere("$filter.id = '".$mixed->getId()."'");
+        }
+
+        return $query;
     }
 
     /**
@@ -61,7 +113,13 @@ class NodeManager
         if (is_numeric($mixed)) {
             return $entity->find($mixed);
         } else if (is_array($mixed)) {
-            return $entity->findOneBy($mixed);
+            $array = $entity->findBy($mixed);
+
+            if (is_array($array) and count($array) == 1) {
+                return $array[0];
+            }
+
+            return $array;
         } else if (is_object($mixed)) {
             return $mixed;
         }
@@ -106,29 +164,37 @@ class NodeManager
      */
     public function getFirst($a, $type, $b)
     {
-        return $this->getLink(
-            array(
-                "a" => $this->getNode($a),
-                "b" => $this->getNode($b),
-                "type" => $this->getType($type),
-                "back" => null
-            )
-        );
+        $a = $this->getNode($a);
+        $type = $this->getType($type);
+        $b = $this->getNode($b);
+
+        return $this->get(
+            $a->getType()->getName(),
+            $type->getName(),
+            $b->getType()->getName(),
+            $b->getId(),
+            'b',
+            'back'
+        )->getQuery()->getOneOrNullResult();
     }
 
     /**
      * Get last Node
      */
-    public function getLast($a, $link, $b)
+    public function getLast($a, $type, $b)
     {
-        return $this->getLink(
-            array(
-                "a" => $this->getNode($a),
-                "b" => $this->getNode($b),
-                "type" => $this->getType($link),
-                "next" => null
-            )
-        );
+        $a = $this->getNode($a);
+        $type = $this->getType($type);
+        $b = $this->getNode($b);
+
+        return $this->get(
+            $a->getType()->getName(),
+            $type->getName(),
+            $b->getType()->getName(),
+            $b->getId(),
+            'b',
+            'next'
+        )->getQuery()->getOneOrNullResult();
     }
 
     /**
@@ -145,6 +211,8 @@ class NodeManager
 
         $this->manager->persist($node);
         $this->manager->flush();
+
+        return $node;
     }
 
     /**
@@ -161,12 +229,14 @@ class NodeManager
 
         $this->manager->persist($type);
         $this->manager->flush();
+
+        return $type;
     }
 
     /**
      * Create or update Link entity.
      */
-    public function updateLink($a, $type, $b, $size = null, $id = null, $next = null, $back = null)
+    public function updateLink($a, $type, $b, $size = 12, $id = null)
     {
         if ($id) {
             $link = $this->getLink($id);
@@ -178,12 +248,12 @@ class NodeManager
             $this->getNode($a),
             $this->getType($type),
             $this->getNode($b),
-            $size,
-            $this->getLink($next),
-            $this->getLink($back)
+            $size
         );
         $this->manager->persist($link);
         $this->manager->flush();
+
+        return $link;
     }
 
     /**
@@ -234,64 +304,91 @@ class NodeManager
     /**
      *
      */
-    public function insetFirst($a, $type, $b, $size)
+    public function insetFirst($a, $type, $b, $size = 12)
     {
-        $this->updateLink($a, $this->getType($link), $b, null, null, $next, $back);
+        return $this->updateLink($a, $type, $b, $size);
     }
 
     /**
      *
      */
-    public function insertLast($a, $b, $link)
+    public function insertLast($a, $type, $b, $size = 12)
     {
-        return true;
+        $link = $this->updateLink($a, $type, $b, $size);
+
+        $this->reorder($link, $this->getLast($a, $type, $b), $type);
+
+        return $link;
     }
 
     /**
      *
      */
-    public function insertAfter($a, $b, $link)
+    public function insertAfter($a, $type, $b, $c, $size = 12)
     {
-        return true;
+        $link = $this->updateLink($a, $type, $b, $size);
+
+        $this->reorder($link, $c, $type);
+
+        return $link;
     }
 
     /**
      *
      */
-    public function insertBefore($a, $b, $link)
+    public function insertBefore($a, $type, $b, $c, $size = 12)
     {
-        return true;
+        $link = $this->updateLink($a, $type, $b, $size);
+
+        $this->reorder($c, $link, $type);
+
+        return $link;
     }
 
-    /**
-     *
-     */
-    public function replace($a, $b, $link)
+    /*
+    public function replaceA($link, $a)
     {
-        return true;
+        $link = $this->getLink($link);
+        $link->setA($a);
+
+        $this->manager->persist($a);
+        $this->manager->flush();
     }
 
-    /**
-     *
-     */
-    public function isEmpty($b, $link)
+    public function replaceB($link, $b)
     {
+        $link = $this->getLink($link);
+        $link->setB($b);
+
+        $this->manager->persist($b);
+        $this->manager->flush();
+    }
+
+    public function isEmpty($a, $type, $b)
+    {
+        if ($this->getFirst($a, $type, $b)) {
+            return true;
+        }
+
         return false;
     }
 
-    /**
-     *
-     */
-    public function isFirst($a, $b, $link)
+    public function isFirst($link, $a, $type, $b)
     {
+        if ($link == $this->getFirst($a, $type, $b)) {
+            return true;
+        }
+
         return false;
     }
 
-    /**
-     *
-     */
-    public function isLast($a, $b, $link)
+    public function isLast($link, $a, $type, $b)
     {
+        if ($link == $this->getLast($a, $type, $b)) {
+            return true;
+        }
+
         return false;
     }
+    */
 }

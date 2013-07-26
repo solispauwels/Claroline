@@ -12,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Link
 {
-    public function __construct($position)
+    public function __construct($position = null)
     {
         $this->size = 12;
 
@@ -71,8 +71,8 @@ class Link
     private $back;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\Node")
-     * @ORM\JoinColumn(name="type", nullable=false)
+     * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\Node\Type")
+     * @ORM\JoinColumn(name="type_id", nullable=false)
      */
     private $type;
 
@@ -204,10 +204,10 @@ class Link
     /**
      * Set type
      *
-     * @param \Claroline\CoreBundle\Entity\Node $type
+     * @param \Claroline\CoreBundle\Entity\Node\Type $type
      * @return Link
      */
-    public function setType(\Claroline\CoreBundle\Entity\Node $type)
+    public function setType(\Claroline\CoreBundle\Entity\Node\Type $type)
     {
         $this->type = $type;
 
@@ -217,7 +217,7 @@ class Link
     /**
      * Get type
      *
-     * @return \Claroline\CoreBundle\Entity\Node
+     * @return \Claroline\CoreBundle\Entity\Node\Type
      */
     public function getType()
     {
@@ -266,5 +266,7 @@ class Link
         if ($back) {
             $this->setBack($back);
         }
+
+        return $this;
     }
 }

@@ -56,8 +56,8 @@ class Node
     private $modified;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\Node")
-     * @ORM\JoinColumn(name="type", nullable=false)
+     * @ORM\ManyToOne(targetEntity="Claroline\CoreBundle\Entity\Node\Type")
+     * @ORM\JoinColumn(name="type_id", nullable=false)
      */
     private $type;
 
@@ -174,10 +174,10 @@ class Node
     /**
      * Set type
      *
-     * @param \Claroline\CoreBundle\Entity\Node $type
+     * @param \Claroline\CoreBundle\Entity\Node\Type $type
      * @return Node
      */
-    public function setType(\Claroline\CoreBundle\Entity\Node $type)
+    public function setType(\Claroline\CoreBundle\Entity\Node\Type $type)
     {
         $this->type = $type;
 
@@ -187,7 +187,7 @@ class Node
     /**
      * Get type
      *
-     * @return \Claroline\CoreBundle\Entity\Node
+     * @return \Claroline\CoreBundle\Entity\Node\Type
      */
     public function getType()
     {

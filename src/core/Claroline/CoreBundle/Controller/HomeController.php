@@ -1,5 +1,6 @@
 <?php
 namespace Claroline\CoreBundle\Controller;
+
 use Claroline\CoreBundle\Entity\Home\Content;
 use Claroline\CoreBundle\Entity\Home\Type;
 use Claroline\CoreBundle\Manager\HomeManager;
@@ -12,6 +13,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+
 /**
  * @TODO doc
  */
@@ -402,7 +404,6 @@ class HomeController
      */
     public function render($template, $array, $default = false)
     {
-
         if ($default) {
             $template = $this->homeService->defaultTemplate($template);
         }
