@@ -5,27 +5,32 @@ namespace Claroline\CoreBundle\DataFixtures\Required;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\DataFixtures\AbstractFixture;
 use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
-use JMS\DiExtraBundle\Annotation\InjectParams;
-use JMS\DiExtraBundle\Annotation\Inject;
+//use JMS\DiExtraBundle\Annotation\InjectParams;
+//use JMS\DiExtraBundle\Annotation\Inject;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 //use Claroline\CoreBundle\Entity\Node\Node;
 //use Claroline\CoreBundle\Entity\Node\Type;
 //use Claroline\CoreBundle\Entity\Node\Link;
-use Claroline\CoreBundle\Manager\NodeManager;
+//use Claroline\CoreBundle\Manager\NodeManager;
 
-class LoadContentData extends AbstractFixture implements OrderedFixtureInterface
+class LoadNodeData extends AbstractFixture implements OrderedFixtureInterface, ContainerAwareInterface
 {
+    private $container;
+    private $node;
+
     /**
-     * @InjectParams({
-     *     "node"       = @Inject("claroline.manager.node_manager")
-     * })
+     * {@inheritDoc}
      */
-    public function __construct(NodeManager $node)
+    public function setContainer(ContainerInterface $container = null)
     {
-        $this->node = $node;
+        $this->container = $container;
     }
 
     public function load(ObjectManager $manager)
     {
+        $this->node = $this->container->get("claroline.manager.node_manager");
+
         $types = $this->loadTypes(
             array(
                 'adress',
@@ -94,6 +99,7 @@ class LoadContentData extends AbstractFixture implements OrderedFixtureInterface
     public function loadPrivileges($types, $privileges)
     {
         $array = array();
+        $kinds = array('own', 'all');
 
         foreach ($privileges as $privilege) {
             foreach ($kinds as $kind) {
